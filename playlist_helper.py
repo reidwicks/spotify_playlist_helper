@@ -15,7 +15,7 @@ import time
 
 #Assigning variables.
 MS = 1000
-CROSSFADE_LENGTH = 1    # Consider re-writing the program so that CROSSFADE_LENGTH
+CROSSFADE_LENGTH = 7    # Consider re-writing the program so that CROSSFADE_LENGTH
 START_TIME = 61200      #and START_TIME are defined outside of the program
 START_TIME_FORM = time.strftime('%H:%M:%S', time.gmtime(START_TIME))
 current_time = START_TIME
@@ -88,7 +88,7 @@ def print_tracks():
         print("Name:        {}".format(item['name']))
         #print("Length:      {}".format(item['length']))
         print("Song starts: {}".format(current_time_form))
-        end_time = current_time + (item['duration_ms']/MS) - CROSSFADE_LENGTH
+        end_time = current_time + (item['duration_ms']/MS)
         end_time_form = time.strftime('%H:%M:%S', time.gmtime(end_time))
         print("Song ends:   {}".format(end_time_form))
         current_time += (item['duration_ms']/MS) - CROSSFADE_LENGTH
@@ -97,7 +97,8 @@ def print_tracks():
     print("Total tracks:    {}".format(track_total))
 
 def move_track(original_pos, new_pos):
-
+    print("Moving track in position {} to position {}".format(original_pos, new_pos))
+    print("Note: This actually does nothing.")
 print_tracks()
 #print("Moving song at position {} to position {}".format("8", "2"))
 #Write something to move tracks
