@@ -5,6 +5,8 @@
 # allowing you to set a time of day that you want to start your playlist, and
 # using that data to tell you at what time each song will start and finish
 # it will also take into account the length of your crossfade
+# I haven't decided on a license yet, so this code is copyright Reid Wicks
+# until I can decide on an appropriate license.
 
 import json
 import spotipy
@@ -95,7 +97,7 @@ def print_tracks():
     print("Total tracks:    {}".format(track_total))
 
 def move_track(original_pos, new_pos):
-    
+
 print_tracks()
 #print("Moving song at position {} to position {}".format("8", "2"))
 #Write something to move tracks
