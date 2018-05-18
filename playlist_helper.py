@@ -12,6 +12,7 @@ import json
 import spotipy
 import spotipy.util as util
 import time
+import difflib
 
 #Assigning variables.
 MS = 1000
@@ -98,6 +99,9 @@ def print_tracks():
 
 def move_track():
     #Use this guide: https://beta.developer.spotify.com/console/put-playlist-tracks/
+    # Difflib explanation: https://docs.python.org/3/library/difflib.html
+    word_to_search = input("Type the name of the track you want to move: ")
+    print("Did you mean?" + difflib.get_close_matches(word_to_search))
     track_to_move = input("Type the name of the track you want to move: ")
     new_location = int(input("Please enter the position you wish to move the track to: "))
     for item in playlist_tracks:
