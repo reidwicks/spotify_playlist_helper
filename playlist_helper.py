@@ -36,16 +36,25 @@ with open("app_data.txt", "r") as app_data:
 token = util.prompt_for_user_token(username,scope,client_id,client_secret,redirect_uri)
 sp = spotipy.Spotify(auth=token)
 
+class Song(object):
+    def __init__(self, name, artists, duration_ms, song_uri, length, location):
+        self.name = name
+        self.artists = artists
+        self.duration_ms = duration_ms
+        self.song_uri = song_uri
+        self.length = length
+        self.location = location
+
 part1 = sp.user_playlist_tracks(username,
                                 playlist_id,
-                                fields='items(track(name,duration_ms,uri))',
+                                fields='items(track(name,artists,duration_ms,uri))',
                                 limit=100,
                                 offset=0,
                                 market=None,
                                 )
 part2 = sp.user_playlist_tracks(username,
                                 playlist_id,
-                                fields='items(track(name,duration_ms,uri))',
+                                fields='items(track(name,artists,duration_ms,uri))',
                                 limit=100,
                                 offset=100,
                                 market=None,
@@ -55,44 +64,33 @@ for x in part1:
     for y in part1[x]:
         for z in y:
             name = y[z]['name']
+            artists = y[z]['artists']
             duration_ms = y[z]['duration_ms']
             song_uri = y[z]['uri']
             length = time.strftime('%M:%S', time.gmtime(duration_ms/MS))
-            position = track_total
-            playlist_tracks.append({'name': name,
-                                    'duration_ms': duration_ms,
-                                    'uri': song_uri,
-                                    'length': length,
-                                    'position': position,
-                                    })
+            playlist_tracks.append(Song(name,artists,duration_ms,song_uri,length,track_total))
             track_total += 1
 for x in part2:
     for y in part2[x]:
         for z in y:
             name = y[z]['name']
+            artists = y[z]['artists']
             duration_ms = y[z]['duration_ms']
             song_uri = y[z]['uri']
             length = time.strftime('%M:%S', time.gmtime(duration_ms/MS))
-            position = track_total
-            playlist_tracks.append({'name': name,
-                                    'duration_ms': duration_ms,
-                                    'uri': song_uri,
-                                    'length': length,
-                                    'position': position,
-                                    })
+            playlist_tracks.append(Song(name,artists,duration_ms,song_uri,length,track_total))
             track_total += 1
 def print_tracks():
     global current_time_form  # Yeah, yeah, I know. "Don't use global variables".
     global current_time       # I'm using them here to avoid constantly passing variables
     for item in playlist_tracks:
-        print("Song pos:    {}".format(item['position']))
-        print("Name:        {}".format(item['name']))
-        #print("Length:      {}".format(item['length']))
+        print("Name:        {}".format(item.name))
+        #print("Length:      {}".format(item.name))
         print("Song starts: {}".format(current_time_form))
-        end_time = current_time + (item['duration_ms']/MS)
+        end_time = current_time + (item.duration_ms/MS)
         end_time_form = time.strftime('%H:%M:%S', time.gmtime(end_time))
         print("Song ends:   {}".format(end_time_form))
-        current_time += (item['duration_ms']/MS) - CROSSFADE_LENGTH
+        current_time += (item.duration_ms/MS) - CROSSFADE_LENGTH
         current_time_form = time.strftime('%H:%M:%S', time.gmtime(current_time))
     print("Playlist ends:   {}".format(current_time_form))
     print("Total tracks:    {}".format(track_total))
@@ -100,13 +98,31 @@ def print_tracks():
 def move_track():
     #Use this guide: https://beta.developer.spotify.com/console/put-playlist-tracks/
     # Difflib explanation: https://docs.python.org/3/library/difflib.html
-    word_to_search = input("Type the name of the track you want to move: ")
-    print("Did you mean?" + difflib.get_close_matches(word_to_search))
-    track_to_move = input("Type the name of the track you want to move: ")
-    new_location = int(input("Please enter the position you wish to move the track to: "))
+    while True:
+        word_to_search = input("Type the name of the track you want to move: ")
+        matches = difflib.get_close_matches(word_to_search, (item.name for item in playlist_tracks))
+        if len(matches) == 0:
+            matches = []
+            for item in playlist_tracks:
+                if item.name.startswith(word_to_search, beg=0):
+                    matches.add(item.name)
+            if len(matches) == 0:
+                print("No results found for {}. Please try another search.".format(word_to_search))
+            elif len(matches) == 1:
+                track_to_move = matches[0]
+            elif len(matches) > 1:
+                print("Multiple results for {}. Please specify which one you want.".format(word_to_search))
+                print(matches)
+        elif len(matches) > 1:
+            print("Multiple results for {}. Please specify which one you want.".format(word_to_search))
+            print(matches)
+        else:
+            track_to_move = matches[0]
+            break
+    new_location = int(input("Please enter the position you wish to move \"{}\" to: ".format(track_to_move)))
     for item in playlist_tracks:
-        if item['name'] == track_to_move:
-            sp.user_playlist_reorder_tracks(username, playlist_id, item['position'], new_location)
+        if item.name == track_to_move:
+            sp.user_playlist_reorder_tracks(username, playlist_id, item.location, new_location)
     print("Moving track {} to position {}".format(track_to_move, new_location))
 def find_uri():
     track_pos = int(input("Please enter the position of the track you want the URI for: "))
