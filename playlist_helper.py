@@ -96,9 +96,21 @@ def print_tracks():
     print("Playlist ends:   {}".format(current_time_form))
     print("Total tracks:    {}".format(track_total))
 
-def move_track(original_pos, new_pos):
-    print("Moving track in position {} to position {}".format(original_pos, new_pos))
-    print("Note: This actually does nothing.")
+def move_track():
+    #Use this guide: https://beta.developer.spotify.com/console/put-playlist-tracks/
+    track_to_move = input("Type the name of the track you want to move: ")
+    new_location = int(input("Please enter the position you wish to move the track to: "))
+    for item in playlist_tracks:
+        if item['name'] == track_to_move:
+            sp.user_playlist_reorder_tracks(username, playlist_id, item['position'], new_location)
+    print("Moving track {} to position {}".format(track_to_move, new_location))
+def find_uri():
+    track_pos = int(input("Please enter the position of the track you want the URI for: "))
+    for item in playlist_tracks:
+        if item['position'] == track_pos:
+            track_uri = item['uri']
+            break
+    print(track_uri)
+
 print_tracks()
-#print("Moving song at position {} to position {}".format("8", "2"))
-#Write something to move tracks
+move_track()
