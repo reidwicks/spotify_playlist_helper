@@ -13,10 +13,11 @@ import spotipy
 import spotipy.util as util
 import time
 import difflib
+import os
 
 #Assigning variables.
 MS = 1000
-CROSSFADE_LENGTH = 7    # Consider re-writing the program so that CROSSFADE_LENGTH
+CROSSFADE_LENGTH = 1    # Consider re-writing the program so that CROSSFADE_LENGTH
 START_TIME = 61200      #and START_TIME are defined outside of the program
 START_TIME_FORM = time.strftime('%H:%M:%S', time.gmtime(START_TIME))
 current_time = START_TIME
@@ -64,7 +65,9 @@ for x in part1:
     for y in part1[x]:
         for z in y:
             name = y[z]['name']
-            artists = y[z]['artists']
+            artists = []
+            for item in y[z]['artists']:
+                artists.append(item['name'])
             duration_ms = y[z]['duration_ms']
             song_uri = y[z]['uri']
             length = time.strftime('%M:%S', time.gmtime(duration_ms/MS))
@@ -74,22 +77,26 @@ for x in part2:
     for y in part2[x]:
         for z in y:
             name = y[z]['name']
-            artists = y[z]['artists']
+            artists = []
+            for item in y[z]['artists']:
+                artists.append(item['name'])
             duration_ms = y[z]['duration_ms']
             song_uri = y[z]['uri']
             length = time.strftime('%M:%S', time.gmtime(duration_ms/MS))
             playlist_tracks.append(Song(name,artists,duration_ms,song_uri,length,track_total))
             track_total += 1
+
 def print_tracks():
     global current_time_form  # Yeah, yeah, I know. "Don't use global variables".
-    global current_time       # I'm using them here to avoid constantly passing variables
+    #global current_time       # I'm using them here to avoid constantly passing variables
+    current_time = START_TIME
     for item in playlist_tracks:
-        print("Name:        {}".format(item.name))
-        #print("Length:      {}".format(item.name))
-        print("Song starts: {}".format(current_time_form))
+        print("{}: {}".format(item.location,item.name))
+        #for a in item.artists:
+        #    print(a)
         end_time = current_time + (item.duration_ms/MS)
         end_time_form = time.strftime('%H:%M:%S', time.gmtime(end_time))
-        print("Song ends:   {}".format(end_time_form))
+        print("Time: {} to {}".format(current_time_form, end_time_form))
         current_time += (item.duration_ms/MS) - CROSSFADE_LENGTH
         current_time_form = time.strftime('%H:%M:%S', time.gmtime(current_time))
     print("Playlist ends:   {}".format(current_time_form))
@@ -97,7 +104,6 @@ def print_tracks():
 
 def move_track():
     #Use this guide: https://beta.developer.spotify.com/console/put-playlist-tracks/
-    # Difflib explanation: https://docs.python.org/3/library/difflib.html
     while True:
         word_to_search = input("Type the name of the track you want to move: ")
         matches = difflib.get_close_matches(word_to_search, (item.name for item in playlist_tracks))
@@ -131,6 +137,22 @@ def find_uri():
             track_uri = item['uri']
             break
     print(track_uri)
-
-print_tracks()
-move_track()
+def main_menu():
+    while True:
+        print(  "1. List tracks" + "\n" +
+                "2. Move track" + "\n" +
+                "3. Exit")
+        answer = input()
+        if not answer.isdigit():
+            print("Please enter a valid option")
+        else:
+            answer = int(answer)
+            if answer > 3 or answer == 0:
+                print("Please enter a valid option")
+            elif answer==1:
+                print_tracks()
+            elif answer==2:
+                move_track()
+            elif answer==3:
+                os._exit(0)
+main_menu()
