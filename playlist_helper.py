@@ -18,7 +18,7 @@ import os
 #Assigning variables.
 MS = 1000
 CROSSFADE_LENGTH = 1    # Consider re-writing the program so that CROSSFADE_LENGTH
-START_TIME = 61200      #and START_TIME are defined outside of the program
+START_TIME = 66600      #and START_TIME are defined outside of the program
 START_TIME_FORM = time.strftime('%H:%M:%S', time.gmtime(START_TIME))
 current_time = START_TIME
 current_time_form = time.strftime('%H:%M:%S', time.gmtime(current_time))
