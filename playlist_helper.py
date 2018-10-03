@@ -17,18 +17,25 @@ import os
 
 #Assigning variables.
 MS = 1000
-CROSSFADE_LENGTH = 1    # Consider re-writing the program so that CROSSFADE_LENGTH
-START_TIME = 66600      #and START_TIME are defined outside of the program
-START_TIME_FORM = time.strftime('%H:%M:%S', time.gmtime(START_TIME))
-current_time = START_TIME
-current_time_form = time.strftime('%H:%M:%S', time.gmtime(current_time))
 playlist_tracks = []
 track_total = 0         # Not strictly necessary, but useful for assignining positions to each track.
 
-with open("user_data.txt", "r") as user_data:
-    username = user_data.readline().rstrip()        # The user's username should be the first line of the user_data file
-    playlist_id = user_data.readline().rstrip()     # Playlist ID is the second line in the user_data file
-    scope = user_data.readline().rstrip()           # Scopes are the third line of the file
+def get_sec(time_str): #stolen straight from StackExchange: https://stackoverflow.com/a/6402859/7980598
+    h, m, s = time_str.split(':')
+    return int(h)*3600 + int(m)*60 + int(s)
+
+def format_time(time_sec):
+    return time.strftime('%H:%M:%S', time.gmtime(time_sec))
+
+with open("config.txt", "r") as user_data:
+    username = user_data.readline().partition('#')[0].rstrip() # The user's username should be the first line of the user_data file
+    #print("DEBUGGING: '" + username + "'")
+    playlist_id = user_data.readline().partition('#')[0].rstrip()   # Playlist ID is the second line in the user_data file
+    scope = user_data.readline().partition('#')[0].rstrip()         # Scopes are the third line of the file
+    start_time = user_data.readline().partition('#')[0].rstrip()    # Gets the start time in hh:mm:ss format
+    start_time = get_sec(start_time)                                # Converts start time to seconds
+    current_time = start_time
+    crossfade_length = int(user_data.readline().partition('#')[0].rstrip())
 with open("app_data.txt", "r") as app_data:
     client_id = app_data.readline().rstrip()        # Client ID is the first line of the app_data file
     client_secret = app_data.readline().rstrip()    # Client secret is the second line of the app_data file
@@ -46,6 +53,10 @@ class Song(object):
         self.length = length
         self.location = location
 
+#turn this into a function that loops over everything until every song has been found
+#something like:
+#while list_of_songs < user_playlist_tracks.length:
+#   retrieve_songs(n)
 part1 = sp.user_playlist_tracks(username,
                                 playlist_id,
                                 fields='items(track(name,artists,duration_ms,uri))',
@@ -70,7 +81,7 @@ for x in part1:
                 artists.append(item['name'])
             duration_ms = y[z]['duration_ms']
             song_uri = y[z]['uri']
-            length = time.strftime('%M:%S', time.gmtime(duration_ms/MS))
+            length = format_time(duration_ms/MS)
             playlist_tracks.append(Song(name,artists,duration_ms,song_uri,length,track_total))
             track_total += 1
 for x in part2:
@@ -82,24 +93,20 @@ for x in part2:
                 artists.append(item['name'])
             duration_ms = y[z]['duration_ms']
             song_uri = y[z]['uri']
-            length = time.strftime('%M:%S', time.gmtime(duration_ms/MS))
+            length = format_time(duration_ms/MS)
             playlist_tracks.append(Song(name,artists,duration_ms,song_uri,length,track_total))
             track_total += 1
 
 def print_tracks():
     global current_time_form  # Yeah, yeah, I know. "Don't use global variables".
     #global current_time       # I'm using them here to avoid constantly passing variables
-    current_time = START_TIME
+    current_time = start_time
     for item in playlist_tracks:
         print("{}: {}".format(item.location,item.name))
-        #for a in item.artists:
-        #    print(a)
         end_time = current_time + (item.duration_ms/MS)
-        end_time_form = time.strftime('%H:%M:%S', time.gmtime(end_time))
-        print("Time: {} to {}".format(current_time_form, end_time_form))
-        current_time += (item.duration_ms/MS) - CROSSFADE_LENGTH
-        current_time_form = time.strftime('%H:%M:%S', time.gmtime(current_time))
-    print("Playlist ends:   {}".format(current_time_form))
+        print("Time: {} to {}".format(format_time(current_time), formate_time(end_time)))
+        current_time += (item.duration_ms/MS) - crossfade_length
+    print("Playlist ends:   {}".format(format_time(current_time)))
     print("Total tracks:    {}".format(track_total))
 
 def move_track():
@@ -155,4 +162,7 @@ def main_menu():
                 move_track()
             elif answer==3:
                 os._exit(0)
+
+
+
 main_menu()
