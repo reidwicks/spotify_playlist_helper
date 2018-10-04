@@ -17,8 +17,7 @@ import os
 
 #Assigning variables.
 MS = 1000
-playlist_tracks = []
-track_total = 0         # Not strictly necessary, but useful for assignining positions to each track.
+tracklist = []
 
 def get_sec(time_str): #stolen straight from StackExchange: https://stackoverflow.com/a/6402859/7980598
     h, m, s = time_str.split(':')
@@ -28,8 +27,7 @@ def format_time(time_sec):
     return time.strftime('%H:%M:%S', time.gmtime(time_sec))
 
 with open("config.txt", "r") as user_data:
-    username = user_data.readline().partition('#')[0].rstrip() # The user's username should be the first line of the user_data file
-    #print("DEBUGGING: '" + username + "'")
+    username = user_data.readline().partition('#')[0].rstrip()      # The user's username should be the first line of the user_data file
     playlist_id = user_data.readline().partition('#')[0].rstrip()   # Playlist ID is the second line in the user_data file
     scope = user_data.readline().partition('#')[0].rstrip()         # Scopes are the third line of the file
     start_time = user_data.readline().partition('#')[0].rstrip()    # Gets the start time in hh:mm:ss format
@@ -45,69 +43,39 @@ token = util.prompt_for_user_token(username,scope,client_id,client_secret,redire
 sp = spotipy.Spotify(auth=token)
 
 class Song(object):
-    def __init__(self, name, artists, duration_ms, song_uri, length, location):
+    def __init__(self, name, artists, duration_ms, song_uri, length):
         self.name = name
         self.artists = artists
         self.duration_ms = duration_ms
         self.song_uri = song_uri
         self.length = length
-        self.location = location
 
-#turn this into a function that loops over everything until every song has been found
-#something like:
-#while list_of_songs < user_playlist_tracks.length:
-#   retrieve_songs(n)
-part1 = sp.user_playlist_tracks(username,
-                                playlist_id,
-                                fields='items(track(name,artists,duration_ms,uri))',
-                                limit=100,
-                                offset=0,
-                                market=None,
-                                )
-part2 = sp.user_playlist_tracks(username,
-                                playlist_id,
-                                fields='items(track(name,artists,duration_ms,uri))',
-                                limit=100,
-                                offset=100,
-                                market=None,
-                                )
-
-for x in part1:
-    for y in part1[x]:
-        for z in y:
-            name = y[z]['name']
-            artists = []
-            for item in y[z]['artists']:
-                artists.append(item['name'])
-            duration_ms = y[z]['duration_ms']
-            song_uri = y[z]['uri']
-            length = format_time(duration_ms/MS)
-            playlist_tracks.append(Song(name,artists,duration_ms,song_uri,length,track_total))
-            track_total += 1
-for x in part2:
-    for y in part2[x]:
-        for z in y:
-            name = y[z]['name']
-            artists = []
-            for item in y[z]['artists']:
-                artists.append(item['name'])
-            duration_ms = y[z]['duration_ms']
-            song_uri = y[z]['uri']
-            length = format_time(duration_ms/MS)
-            playlist_tracks.append(Song(name,artists,duration_ms,song_uri,length,track_total))
-            track_total += 1
+def get_tracks():
+    results = sp.user_playlist(username, playlist_id, fields="tracks")
+    tracks = results['tracks']
+    for item in tracks['items']:
+        track = item['track']
+        name = track['name']
+        artists = []
+        for arti in track['artists']:
+            artists.append(arti['name'])
+        duration_ms = track['duration_ms']
+        song_uri = track['uri']
+        length = format_time(duration_ms/MS)
+        tracklist.append(Song(name,artists,duration_ms,song_uri,length))
 
 def print_tracks():
-    global current_time_form  # Yeah, yeah, I know. "Don't use global variables".
-    #global current_time       # I'm using them here to avoid constantly passing variables
+    get_tracks()
     current_time = start_time
-    for item in playlist_tracks:
-        print("{}: {}".format(item.location,item.name))
+    n = 0
+    for item in tracklist:
+        print("{}: {}".format(n,item.name))
         end_time = current_time + (item.duration_ms/MS)
-        print("Time: {} to {}".format(format_time(current_time), formate_time(end_time)))
+        print("Time: {} to {}".format(format_time(current_time), format_time(end_time)))
         current_time += (item.duration_ms/MS) - crossfade_length
+        n+=1
     print("Playlist ends:   {}".format(format_time(current_time)))
-    print("Total tracks:    {}".format(track_total))
+    print("Total tracks:    {}".format(n))
 
 def move_track():
     #Use this guide: https://beta.developer.spotify.com/console/put-playlist-tracks/
@@ -162,7 +130,4 @@ def main_menu():
                 move_track()
             elif answer==3:
                 os._exit(0)
-
-
-
 main_menu()
