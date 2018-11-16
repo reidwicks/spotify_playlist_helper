@@ -50,9 +50,7 @@ class Song(object):
         self.song_uri = song_uri
         self.length = length
 
-def get_tracks():
-    results = sp.user_playlist(username, playlist_id, fields="tracks")
-    tracks = results['tracks']
+def add_tracks_to_list(tracks):
     for item in tracks['items']:
         track = item['track']
         name = track['name']
@@ -63,6 +61,16 @@ def get_tracks():
         song_uri = track['uri']
         length = format_time(duration_ms/MS)
         tracklist.append(Song(name,artists,duration_ms,song_uri,length))
+
+
+def get_tracks():
+    results = sp.user_playlist(username, playlist_id, fields="tracks,next")
+    tracks = results['tracks']
+    add_tracks_to_list(tracks)
+    while tracks['next']:       #this checks if there are more than 100 tracks (as 'tracks' will only contain the first 100 songs)
+        tracks = sp.next(tracks)    #if there are more than 100 tracks, the next 100 are assigned to 'tracks'
+        add_tracks_to_list(tracks)  #then tracks is passed to add_tracks_to_list() to add them to the list
+
 
 def print_tracks():
     get_tracks()
